@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HTML5 LRC 繁簡中文同步播放器 (精讀優化版)</title>
     <style>
-        /* 基礎樣式重設 */
         body {
             font-family: "Microsoft JhengHei", "PingFang TC", "Helvetica Neue", sans-serif;
             background-color: #f5f5f5;
@@ -16,8 +15,6 @@
             height: 100vh;
             overflow: hidden;
         }
-
-        /* 1. 全置頂控制面板 */
         #top-panel {
             background-color: #eaeaea;
             padding: 15px 25px;
@@ -27,15 +24,12 @@
             gap: 12px;
             z-index: 10;
         }
-
         .control-row {
             display: flex;
             align-items: center;
             gap: 15px;
             flex-wrap: wrap;
         }
-
-        /* 自訂美化檔案選擇按鈕 */
         .file-input-btn {
             background-color: #4A90E2;
             color: white;
@@ -49,9 +43,7 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .file-input-btn:hover { background-color: #357ABD; }
-        .file-input-btn:active { transform: scale(0.98); }
         input[type="file"] { display: none; }
-
         #status-lbl {
             color: #444;
             font-weight: 500;
@@ -61,15 +53,11 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
-
-        /* 內建原生音訊播放條 */
         audio {
             flex-grow: 1;
             height: 40px;
             min-width: 250px;
         }
-
-        /* 變速功能按鈕 */
         .speed-ctrl-group {
             display: flex;
             align-items: center;
@@ -77,7 +65,6 @@
             border: 1px solid #ccc;
             border-radius: 6px;
             overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
         .speed-btn {
             padding: 8px 14px;
@@ -85,22 +72,15 @@
             border: none;
             background: white;
             font-size: 14px;
-            transition: background-color 0.2s;
         }
         .speed-btn:hover { background: #eee; }
-        .speed-btn:active { background: #ddd; }
         #speed-display {
             font-weight: bold;
             min-width: 65px;
             text-align: center;
             font-size: 14px;
             color: #333;
-            border-left: 1px solid #eee;
-            border-right: 1px solid #eee;
-            user-select: none;
         }
-
-        /* 2. 下方大面積歌詞區 */
         #lyric-container {
             flex-grow: 1;
             background-color: #ffffff;
@@ -108,32 +88,25 @@
             border: 1px solid #e0e0e0;
             border-radius: 8px;
             overflow-y: auto;
-            padding: 40vh 40px; /* 預留上下視覺緩衝，使首尾歌詞也能完美置中 */
+            padding: 40vh 40px;
             box-sizing: border-box;
             text-align: center;
-            scroll-behavior: smooth; /* 啟動原生的平滑滾動 */
+            scroll-behavior: smooth;
         }
-
-        /* 逐行歌詞樣式 */
         .lyric-line {
             padding: 14px 20px;
             color: #444444;
             font-size: 20px;
             line-height: 1.8;
             border-radius: 6px;
-            cursor: pointer; /* 滑鼠移上去顯示手指，提示可點擊 */
-            user-select: text;
+            cursor: pointer;
             transition: all 0.25s ease;
             margin: 4px 0;
         }
-
-        /* 滑鼠懸停於歌詞行的視覺回饋 */
         .lyric-line:hover {
             background-color: #f0f7ff;
             color: #000000;
         }
-
-        /* 💥 當前播放歌詞之高亮藍底白字樣式 (完美符合 SDD 規範) */
         .lyric-line.highlight {
             color: #ffffff !important;
             background-color: #4A90E2 !important;
@@ -141,8 +114,6 @@
             transform: scale(1.02);
             box-shadow: 0 4px 10px rgba(74,144,226,0.35);
         }
-
-        /* 提示引導文字 */
         .placeholder-text {
             color: #999;
             font-size: 16px;
@@ -160,16 +131,14 @@
             <label class="file-input-btn" style="background-color: #5CBB7A;">📄 載入 LRC 歌詞
                 <input type="file" id="lrc-file" accept=".lrc">
             </label>
-            <span id="status-lbl">系統就緒，請載入音訊與歌詞檔案開始精讀...</span>
+            <span id="status-lbl">系統就緒，請載入音訊與歌詞檔案...</span>
         </div>
-
         <div class="control-row">
             <audio id="audio-player" controls></audio>
-
             <div class="speed-ctrl-group">
-                <button class="speed-btn" onclick="changeSpeed(-0.1)" title="放慢語速">🐢 放慢</button>
+                <button class="speed-btn" onclick="changeSpeed(-0.1)">🐢 放慢</button>
                 <span id="speed-display">速度: 1.0x</span>
-                <button class="speed-btn" onclick="changeSpeed(0.1)" title="加快語速">🚀 加快</button>
+                <button class="speed-btn" onclick="changeSpeed(0.1)">🚀 加快</button>
             </div>
         </div>
     </div>
@@ -177,14 +146,13 @@
     <div id="lyric-container">
         <div class="placeholder-text" id="placeholder">
             <p>💡 使用說明：</p>
-            <p>1. 請先點擊上方按鈕分別選取您的 <b>MP3 音訊檔案</b> 與對應的 <b>LRC 歌詞檔</b>。</p>
+            <p>1. 請分別選取您的 <b>MP3 音訊檔案</b> 與 <b>LRC 歌詞檔</b>。</p>
             <p>2. 播放中歌詞會<b>自動平滑捲動並保持置中</b>。</p>
-            <p>3. 您可以<b>直接點擊下方任何一行文字</b>，音訊會瞬間反向跳轉至該進度。</p>
+            <p>3. 可以<b>直接點擊任何一行文字</b>，音訊會瞬間跳轉至該進度。</p>
         </div>
     </div>
 
     <script>
-        // DOM 元件獲取
         const audioPlayer = document.getElementById('audio-player');
         const mp3FileInput = document.getElementById('mp3-file');
         const lrcFileInput = document.getElementById('lrc-file');
@@ -192,207 +160,153 @@
         const lyricContainer = document.getElementById('lyric-container');
         const speedDisplay = document.getElementById('speed-display');
 
-        // 全域狀態變數
-        let lyrics = [];      // 儲存解析後的結構化歌詞陣列 [{time, text, id}]
-        let currentIdx = -1;  // 當前高亮的歌詞索引
+        let lyrics = [];
+        let currentIdx = -1;
         let currentSpeed = 1.0;
 
-        // ----------------------------------------------------
-        // 1. 音訊檔案載入處理
-        // ----------------------------------------------------
         mp3FileInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
-
-            const fileURL = URL.createObjectURL(file);
-            audioPlayer.src = fileURL;
+            audioPlayer.src = URL.createObjectURL(file);
             statusLbl.innerText = `目前音訊: ${file.name}`;
-            audioPlayer.play().catch(err => console.log("自動播放受瀏覽器安全限制，請手動點擊播放。"));
+            audioPlayer.play().catch(err => console.log("等待手動播放"));
         });
 
-        // ----------------------------------------------------
-        // 2. 智慧型三軌編碼自動容錯模組 (UTF-8 ➔ Big5 ➔ GBK)
-        // ----------------------------------------------------
+        // 核心改版：完美攔截實心問號 \ufffd 與空心問號，並做多軌重新解析
         lrcFileInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
 
             const reader = new FileReader();
-
             reader.onload = function(evt) {
                 const buffer = evt.target.result;
-                const timeTagPattern = /\[\d+:\d+/; // 用於驗證是否成功解析出時間軸的正則表達式
 
-                // --- 第一軌：嘗試使用標準 UTF-8 解碼 ---
-                let decoder = new TextDecoder('utf-8');
-                let decodedText = decoder.decode(buffer);
+                // 1. 嘗試 UTF-8
+                let text = new TextDecoder('utf-8').decode(buffer);
+                let parsed = parseLrcToArray(text);
 
-                // 檢查是否包含亂碼標質，或完全找不到任何時間標籤 [00:00
-                if (decodedText.includes('') || !timeTagPattern.test(decodedText)) {
-                    console.log("UTF-8 驗證失敗或產生亂碼，切換至第二軌 (Big5)...");
+                // 檢查機制：如果包含實心問號、空心問號，或者完全解析不出歌詞
+                if (text.includes('\ufffd') || text.includes('') || parsed.length === 0) {
+                    console.log("UTF-8 解碼失敗，切換至 Big5...");
 
-                    // --- 第二軌：嘗試使用繁體中文 Big5 解碼 ---
-                    decoder = new TextDecoder('big5');
-                    decodedText = decoder.decode(buffer);
+                    // 2. 嘗試 Big5
+                    text = new TextDecoder('big5').decode(buffer);
+                    parsed = parseLrcToArray(text);
 
-                    // 如果用 Big5 解碼後依舊無法辨識時間標籤，則判定為簡體系統 ANSI 檔
-                    if (!timeTagPattern.test(decodedText)) {
-                        console.log("Big5 驗證失敗，切換至第三軌 (GBK)...");
+                    // 如果 Big5 出來還是沒歌詞，切換至 GBK
+                    if (parsed.length === 0 || text.includes('\ufffd')) {
+                        console.log("Big5 解碼失敗，切換至 GBK...");
 
-                        // --- 第三軌：嘗試使用簡體中文 GBK 解碼 ---
-                        decoder = new TextDecoder('gbk');
-                        decodedText = decoder.decode(buffer);
+                        // 3. 嘗試 GBK
+                        text = new TextDecoder('gbk').decode(buffer);
+                        parsed = parseLrcToArray(text);
                     }
                 }
 
-                // 送入解析器進行結構化與畫面渲染
-                parseAndRenderLrc(decodedText);
+                // 將最終決定的解析陣列送去渲染
+                lyrics = parsed;
+                renderLyrics();
             };
-
-            // 以原始二進位位元流讀取，供 TextDecoder 後續精確解碼
             reader.readAsArrayBuffer(file);
         });
 
-        // ----------------------------------------------------
-        // 3. LRC 語訊文字解析與渲染模組
-        // ----------------------------------------------------
-        function parseAndRenderLrc(text) {
-            lyrics = [];
-            lyricContainer.innerHTML = ''; // 清空先前的畫面
-            currentIdx = -1;
-
+        // 將文字解析為結構化陣列的純函式
+        function parseLrcToArray(text) {
+            const result = [];
             const lines = text.split('\n');
-            // 相容不嚴謹時間軸雜訊容錯正則：支持 [01:23]、[01:23.4]、[01:23.45] 格式
             const pattern = /\[(\d+):(\d+)(?:\.(\d+))?\](.*)/;
-            let lineCount = 0;
+            let count = 0;
 
             lines.forEach(line => {
                 const match = pattern.exec(line.trim());
                 if (match) {
                     const mins = parseInt(match[1]);
                     const secs = parseInt(match[2]);
-                    const hundredthsStr = match[3] || "00";
-
-                    // 標準化毫秒/百毫秒換算
-                    let hundredths = parseInt(hundredthsStr);
-                    if (hundredthsStr.length === 1) hundredths *= 10; // [01:23.4] 補為 40
+                    let hundredths = parseInt(match[3] || "00");
+                    if ((match[3] || "").length === 1) hundredths *= 10;
 
                     const totalSeconds = mins * 60 + secs + (hundredths / 100);
-                    // 若時間軸後方無文字，則自動補上預設空白佔位符，確保視覺節奏
                     const lyricText = match[4].trim() || " ‧ ‧ ‧ ";
 
-                    lineCount++;
-                    lyrics.push({
-                        time: totalSeconds,
-                        text: lyricText,
-                        id: `line_${lineCount}`
-                    });
+                    count++;
+                    result.push({ time: totalSeconds, text: lyricText, id: `line_${count}` });
                 }
             });
+            return result.sort((a, b) => a.time - b.time);
+        }
 
-            // 嚴格依時間軸先後順序進行排序
-            lyrics.sort((a, b) => a.time - b.time);
+        // 渲染畫面模組
+        function renderLyrics() {
+            lyricContainer.innerHTML = '';
+            currentIdx = -1;
 
-            // 邊界異常處理：若完全解析不出歌詞
             if (lyrics.length === 0) {
-                lyricContainer.innerHTML = '<div style="color:#d9534f; font-weight:bold; margin-top:50px; font-size:18px;">⚠️ 無法解析此 LRC 檔案格式。<br>請確認檔案內部是否含有標準時間標籤如 [00:12.34] </div>';
+                lyricContainer.innerHTML = '<div style="color:#d9534f; font-weight:bold; margin-top:50px; font-size:18px;">⚠️ 無法解析此 LRC 檔案格式，請確認是否有時間標籤。</div>';
                 return;
             }
 
-            // 建立文件碎片（DocumentFragment）優化大量 DOM 渲染效能
             const fragment = document.createDocumentFragment();
             lyrics.forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'lyric-line';
                 div.id = item.id;
-                div.setAttribute('data-time', item.time); // 綁定時間數據，用於反向點擊跳轉
+                div.setAttribute('data-time', item.time);
                 div.innerText = item.text;
                 fragment.appendChild(div);
             });
-
             lyricContainer.appendChild(fragment);
         }
 
-        // ----------------------------------------------------
-        // 4. 正向同步模組（音訊進度 ➔ 二分搜尋法 ➔ 歌詞高亮置中）
-        // ----------------------------------------------------
+        // 正向同步 (二分搜尋)
         audioPlayer.addEventListener('timeupdate', function() {
             if (lyrics.length === 0) return;
 
             const currentTime = audioPlayer.currentTime;
             let targetIdx = -1;
-
-            // 核心優化：採用二分搜尋法 (Binary Search) 取代傳統遍歷，時間複雜度 O(log N)
-            let low = 0;
-            let high = lyrics.length - 1;
+            let low = 0, high = lyrics.length - 1;
 
             while (low <= high) {
                 let mid = Math.floor((low + high) / 2);
                 if (currentTime >= lyrics[mid].time) {
-                    targetIdx = mid; // 暫存目前符合條件的最大索引
-                    low = mid + 1;   // 繼續往右邊找看看有沒有更接近當前時間的標籤
+                    targetIdx = mid;
+                    low = mid + 1;
                 } else {
-                    high = mid - 1;  // 往左邊找
+                    high = mid - 1;
                 }
             }
 
-            // 當計算出的目標索引與目前高亮索引不符時，觸發 UI 變更
             if (targetIdx !== currentIdx && targetIdx !== -1) {
-                // 1. 移除舊行高亮
                 if (currentIdx !== -1) {
                     const oldLine = document.getElementById(lyrics[currentIdx].id);
                     if (oldLine) oldLine.classList.remove('highlight');
                 }
 
                 currentIdx = targetIdx;
-
-                // 2. 套用新行高亮
                 const activeLine = document.getElementById(lyrics[currentIdx].id);
                 if (activeLine) {
                     activeLine.classList.add('highlight');
-
-                    // 3. 使用 requestAnimationFrame 確保瀏覽器流暢重繪，平滑滾動至正中央
                     window.requestAnimationFrame(() => {
-                        activeLine.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'center'
-                        });
+                        activeLine.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     });
                 }
             }
         });
 
-        // ----------------------------------------------------
-        // 5. 反向同步模組（利用事件代理監聽歌詞點擊 ➔ 音訊精準跳轉）
-        // ----------------------------------------------------
+        // 反向同步 (事件代理)
         lyricContainer.addEventListener('click', function(e) {
-            // 檢查點擊目標是否為歌詞行
             if (e.target && e.target.classList.contains('lyric-line')) {
                 const targetTime = parseFloat(e.target.getAttribute('data-time'));
                 if (!isNaN(targetTime)) {
-                    // 變更音訊進度，底層會自動觸發 timeupdate 事件進行正向同步校正
                     audioPlayer.currentTime = targetTime;
-
-                    // 如果音訊當前是暫停狀態，點擊後自動維持播放
-                    if (audioPlayer.paused) {
-                        audioPlayer.play();
-                    }
+                    if (audioPlayer.paused) audioPlayer.play();
                 }
             }
         });
 
-        // ----------------------------------------------------
-        // 6. 硬體加速音訊變速調控
-        // ----------------------------------------------------
         function changeSpeed(delta) {
-            // 運算並精確到小數點後第一位
             currentSpeed = Math.round((currentSpeed + delta) * 10) / 10;
-
-            // 限制安全變速範圍為 0.5x 至 2.0x
             if (currentSpeed < 0.5) currentSpeed = 0.5;
             if (currentSpeed > 2.0) currentSpeed = 2.0;
-
-            // 調整瀏覽器原生音訊元件之播放速率 (內建 Pitch 聲碼器保持不失真)
             audioPlayer.playbackRate = currentSpeed;
             speedDisplay.innerText = `速度: ${currentSpeed}x`;
         }
