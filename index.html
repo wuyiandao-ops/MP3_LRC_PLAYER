@@ -123,7 +123,14 @@
             transition: all 0.25s ease;
             margin: 4px 0;
         }
-        .lyric-line:hover {
+        /* 針對純間奏/空白行取消點擊與懸停效果 */
+        .lyric-line.interlude {
+            color: #bbb;
+            font-size: 16px;
+            cursor: default;
+            pointer-events: none;
+        }
+        .lyric-line:not(.interlude):hover {
             background-color: #f0f7ff;
             color: #000000;
         }
@@ -188,6 +195,7 @@
         let lyrics = [];
         let currentIdx = -1;
         let currentSpeed = 1.0;
+        let isSeeking = false; // 追蹤使用者是否正在拖曳進度條
 
         mp3FileInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
@@ -197,6 +205,10 @@
             audioPlayer.play().catch(err => console.log("等待手動播放"));
         });
 
+        // 監聽拖曳進度條狀態，避免滾動衝突
+        audioPlayer.addEventListener('seeking', () => { isSeeking = true; });
+        audioPlayer.addEventListener('seeked', () => { isSeeking = false; });
+
         lrcFileInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -205,16 +217,18 @@
             reader.onload = function(evt) {
                 const buffer = evt.target.result;
 
+                // 1. 嘗試用 UTF-8 解碼
                 let text = new TextDecoder('utf-8').decode(buffer);
                 let parsed = parseLrcToArray(text);
 
-                if (text.includes('\ufffd') || text.includes('') || parsed.length === 0) {
-                    console.log("UTF-8 解碼失敗，切換至 Big5...");
+                // 2. 智慧修正：如果解碼包含 \ufffd (亂碼代碼) 或者完全找不到時間標籤，才切換編碼
+                if (text.includes('\ufffd') || parsed.length === 0) {
+                    console.log("UTF-8 解析失敗，切換至 Big5...");
                     text = new TextDecoder('big5').decode(buffer);
                     parsed = parseLrcToArray(text);
 
-                    if (parsed.length === 0 || text.includes('\ufffd')) {
-                        console.log("Big5 解碼失敗，切換至 GBK...");
+                    if (text.includes('\ufffd') || parsed.length === 0) {
+                        console.log("Big5 解析失敗，切換至 GBK...");
                         text = new TextDecoder('gbk').decode(buffer);
                         parsed = parseLrcToArray(text);
                     }
@@ -229,6 +243,7 @@
         function parseLrcToArray(text) {
             const result = [];
             const lines = text.split('\n');
+            // 改進正則表達式，相容更廣泛的時間戳記格式
             const pattern = /\[(\d+):(\d+)(?:\.(\d+))?\](.*)/;
             let count = 0;
 
@@ -241,10 +256,15 @@
                     if ((match[3] || "").length === 1) hundredths *= 10;
 
                     const totalSeconds = mins * 60 + secs + (hundredths / 100);
-                    const lyricText = match[4].trim() || " ‧ ‧ ‧ ";
+                    const lyricText = match[4].trim();
 
                     count++;
-                    result.push({ time: totalSeconds, text: lyricText, id: `line_${count}` });
+                    result.push({
+                        time: totalSeconds,
+                        text: lyricText || " ‧ ‧ ‧ ",
+                        isInterlude: !lyricText, // 標記是否為空白/間奏行
+                        id: `line_${count}`
+                    });
                 }
             });
             return result.sort((a, b) => a.time - b.time);
@@ -262,7 +282,8 @@
             const fragment = document.createDocumentFragment();
             lyrics.forEach(item => {
                 const div = document.createElement('div');
-                div.className = 'lyric-line';
+                // 如果是空白間奏，加上特定樣式
+                div.className = item.isInterlude ? 'lyric-line interlude' : 'lyric-line';
                 div.id = item.id;
                 div.setAttribute('data-time', item.time);
                 div.innerText = item.text;
@@ -278,6 +299,7 @@
             let targetIdx = -1;
             let low = 0, high = lyrics.length - 1;
 
+            // 高效二分搜尋法
             while (low <= high) {
                 let mid = Math.floor((low + high) / 2);
                 if (currentTime >= lyrics[mid].time) {
@@ -298,15 +320,20 @@
                 const activeLine = document.getElementById(lyrics[currentIdx].id);
                 if (activeLine) {
                     activeLine.classList.add('highlight');
+
+                    // 如果使用者正在手動拉進度條，不要用 smooth 滾動（改用 instant 防止畫面抖動）
+                    const scrollBehavior = isSeeking ? 'auto' : 'smooth';
+
                     window.requestAnimationFrame(() => {
-                        activeLine.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        activeLine.scrollIntoView({ behavior: scrollBehavior, block: 'center' });
                     });
                 }
             }
         });
 
         lyricContainer.addEventListener('click', function(e) {
-            if (e.target && e.target.classList.contains('lyric-line')) {
+            // 點擊非間奏行時才進行跳轉
+            if (e.target && e.target.classList.contains('lyric-line') && !e.target.classList.contains('interlude')) {
                 const targetTime = parseFloat(e.target.getAttribute('data-time'));
                 if (!isNaN(targetTime)) {
                     audioPlayer.currentTime = targetTime;
