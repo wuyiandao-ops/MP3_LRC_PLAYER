@@ -44,9 +44,9 @@
         }
         .file-input-btn:hover { background-color: #357ABD; }
         input[type="file"] { display: none; }
-        #status-lbl { 
-            color: #444; 
-            font-weight: 500; 
+        #status-lbl {
+            color: #444;
+            font-weight: 500;
             font-size: 14px;
             flex-grow: 1;
             white-space: nowrap;
@@ -74,12 +74,32 @@
             font-size: 14px;
         }
         .speed-btn:hover { background: #eee; }
-        #speed-display { 
-            font-weight: bold; 
-            min-width: 65px; 
-            text-align: center; 
+        #speed-display {
+            font-weight: bold;
+            min-width: 65px;
+            text-align: center;
             font-size: 14px;
             color: #333;
+        }
+        /* 新增：右上角文件連結樣式 */
+        .doc-links {
+            margin-left: auto;
+            display: flex;
+            gap: 12px;
+        }
+        .doc-link-btn {
+            font-size: 12px;
+            color: #4A90E2;
+            text-decoration: none;
+            padding: 4px 8px;
+            border: 1px solid #4A90E2;
+            border-radius: 4px;
+            background: rgba(74, 144, 226, 0.05);
+            transition: all 0.2s;
+        }
+        .doc-link-btn:hover {
+            background: #4A90E2;
+            color: white;
         }
         #lyric-container {
             flex-grow: 1;
@@ -132,6 +152,11 @@
                 <input type="file" id="lrc-file" accept=".lrc">
             </label>
             <span id="status-lbl">系統就緒，請載入音訊與歌詞檔案...</span>
+
+            <div class="doc-links">
+                <a class="doc-link-btn" href="https://github.com/wuyandao-ops/MP3_LRC_PLAYER/blob/main/PRD.md" target="_blank">📄 PRD 產品需求</a>
+                <a class="doc-link-btn" href="https://github.com/wuyandao-ops/MP3_LRC_PLAYER/blob/main/SDD.md" target="_blank">🛠️ SDD 軟體設計</a>
+            </div>
         </div>
         <div class="control-row">
             <audio id="audio-player" controls></audio>
@@ -175,26 +200,26 @@
         lrcFileInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
-            
+
             const reader = new FileReader();
             reader.onload = function(evt) {
                 const buffer = evt.target.result;
-                
+
                 let text = new TextDecoder('utf-8').decode(buffer);
                 let parsed = parseLrcToArray(text);
-                
+
                 if (text.includes('\ufffd') || text.includes('') || parsed.length === 0) {
                     console.log("UTF-8 解碼失敗，切換至 Big5...");
                     text = new TextDecoder('big5').decode(buffer);
                     parsed = parseLrcToArray(text);
-                    
+
                     if (parsed.length === 0 || text.includes('\ufffd')) {
                         console.log("Big5 解碼失敗，切換至 GBK...");
                         text = new TextDecoder('gbk').decode(buffer);
                         parsed = parseLrcToArray(text);
                     }
                 }
-                
+
                 lyrics = parsed;
                 renderLyrics();
             };
@@ -214,10 +239,10 @@
                     const secs = parseInt(match[2]);
                     let hundredths = parseInt(match[3] || "00");
                     if ((match[3] || "").length === 1) hundredths *= 10;
-                    
+
                     const totalSeconds = mins * 60 + secs + (hundredths / 100);
                     const lyricText = match[4].trim() || " ‧ ‧ ‧ ";
-                    
+
                     count++;
                     result.push({ time: totalSeconds, text: lyricText, id: `line_${count}` });
                 }
@@ -248,7 +273,7 @@
 
         audioPlayer.addEventListener('timeupdate', function() {
             if (lyrics.length === 0) return;
-            
+
             const currentTime = audioPlayer.currentTime;
             let targetIdx = -1;
             let low = 0, high = lyrics.length - 1;
