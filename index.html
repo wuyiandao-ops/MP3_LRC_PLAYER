@@ -44,9 +44,9 @@
         }
         .file-input-btn:hover { background-color: #357ABD; }
         input[type="file"] { display: none; }
-        #status-lbl {
-            color: #444;
-            font-weight: 500;
+        #status-lbl { 
+            color: #444; 
+            font-weight: 500; 
             font-size: 14px;
             flex-grow: 1;
             white-space: nowrap;
@@ -74,10 +74,10 @@
             font-size: 14px;
         }
         .speed-btn:hover { background: #eee; }
-        #speed-display {
-            font-weight: bold;
-            min-width: 65px;
-            text-align: center;
+        #speed-display { 
+            font-weight: bold; 
+            min-width: 65px; 
+            text-align: center; 
             font-size: 14px;
             color: #333;
         }
@@ -172,45 +172,35 @@
             audioPlayer.play().catch(err => console.log("等待手動播放"));
         });
 
-        // 核心改版：完美攔截實心問號 \ufffd 與空心問號，並做多軌重新解析
         lrcFileInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
-
+            
             const reader = new FileReader();
             reader.onload = function(evt) {
                 const buffer = evt.target.result;
-
-                // 1. 嘗試 UTF-8
+                
                 let text = new TextDecoder('utf-8').decode(buffer);
                 let parsed = parseLrcToArray(text);
-
-                // 檢查機制：如果包含實心問號、空心問號，或者完全解析不出歌詞
+                
                 if (text.includes('\ufffd') || text.includes('') || parsed.length === 0) {
                     console.log("UTF-8 解碼失敗，切換至 Big5...");
-
-                    // 2. 嘗試 Big5
                     text = new TextDecoder('big5').decode(buffer);
                     parsed = parseLrcToArray(text);
-
-                    // 如果 Big5 出來還是沒歌詞，切換至 GBK
+                    
                     if (parsed.length === 0 || text.includes('\ufffd')) {
                         console.log("Big5 解碼失敗，切換至 GBK...");
-
-                        // 3. 嘗試 GBK
                         text = new TextDecoder('gbk').decode(buffer);
                         parsed = parseLrcToArray(text);
                     }
                 }
-
-                // 將最終決定的解析陣列送去渲染
+                
                 lyrics = parsed;
                 renderLyrics();
             };
             reader.readAsArrayBuffer(file);
         });
 
-        // 將文字解析為結構化陣列的純函式
         function parseLrcToArray(text) {
             const result = [];
             const lines = text.split('\n');
@@ -224,10 +214,10 @@
                     const secs = parseInt(match[2]);
                     let hundredths = parseInt(match[3] || "00");
                     if ((match[3] || "").length === 1) hundredths *= 10;
-
+                    
                     const totalSeconds = mins * 60 + secs + (hundredths / 100);
                     const lyricText = match[4].trim() || " ‧ ‧ ‧ ";
-
+                    
                     count++;
                     result.push({ time: totalSeconds, text: lyricText, id: `line_${count}` });
                 }
@@ -235,7 +225,6 @@
             return result.sort((a, b) => a.time - b.time);
         }
 
-        // 渲染畫面模組
         function renderLyrics() {
             lyricContainer.innerHTML = '';
             currentIdx = -1;
@@ -257,10 +246,9 @@
             lyricContainer.appendChild(fragment);
         }
 
-        // 正向同步 (二分搜尋)
         audioPlayer.addEventListener('timeupdate', function() {
             if (lyrics.length === 0) return;
-
+            
             const currentTime = audioPlayer.currentTime;
             let targetIdx = -1;
             let low = 0, high = lyrics.length - 1;
@@ -292,7 +280,6 @@
             }
         });
 
-        // 反向同步 (事件代理)
         lyricContainer.addEventListener('click', function(e) {
             if (e.target && e.target.classList.contains('lyric-line')) {
                 const targetTime = parseFloat(e.target.getAttribute('data-time'));
